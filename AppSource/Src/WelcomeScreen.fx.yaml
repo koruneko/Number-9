@@ -1,0 +1,147 @@
+WelcomeScreen As screen:
+    Fill: =RGBA(15, 15, 15, 1)
+    OnVisible: |-
+        =// レベルの定義
+        Set(
+            LEVEL,
+            {
+                Beginner: 0,
+                Normal: 1,
+                Advanced: 2,
+                Extreme: 3
+            }
+        );
+        // テーマの定義
+        Set(
+            THEME,
+            {
+                Light: 0,
+                Dark: 1
+            }
+        );
+        // 選択可能なテーマの数(テーマのEnumは多重階層としない前提)
+        Set(themeCnt, CountRows(Split(JSON(THEME, JSONFormat.IndentFour), ",")));
+        // デフォルトテーマはDark
+        Set(
+            DesignTheme,
+            THEME.Dark
+        );
+        ClearCollect(
+            welcomeMessages,
+            {
+                Message:
+                    {
+                        Text: "Number 9",
+                        Size: 200,
+                        Font: "Chiller"
+                    }
+            },
+            {
+                Message:
+                    {
+                        Text: "Japan Power Platform Game Builders" & Char(10) & "#JPPGB",
+                        Size: 60,
+                        Font: "Ink Free"
+                    }
+            },
+            {
+                Message:
+                    {
+                        Text: "Created by Korune",
+                        Size: 100,
+                        Font: "Bradley Hand ITC"
+                    }
+            }
+        );
+        UpdateContext({messageViewTime: 3000});
+
+    NavigateTimer As timer:
+        AutoStart: =true
+        Duration: =CountRows(welcomeMessages) * messageViewTime + 100
+        OnTimerEnd: =Navigate(HomeScreen)
+        Start: =true
+        Visible: =false
+        Y: =728
+        ZIndex: =1
+
+    WelcomLbl As label:
+        Align: =Align.Center
+        Color: |-
+            =RGBA(
+                255, 
+                255, 
+                255, 
+                IfError(
+                    If(
+                        Mod(NavigateTimer.Value, messageViewTime) <= 800,
+                            Sin(Radians(Mod(NavigateTimer.Value, messageViewTime) / 800 * 90)),
+                        Mod(NavigateTimer.Value, messageViewTime) >= 2200,
+                            Cos(Radians((Mod(NavigateTimer.Value, messageViewTime) - 2200) / 800 * 90)),
+                        NavigateTimer.Value >= CountRows(welcomeMessages) * messageViewTime,
+                            0,
+                            1
+                    ),
+                    1
+                )
+            )
+        Font: |-
+            =// Index関数がwelcomeMessagesの範囲を超えないように制御
+            IfError(
+                Index(
+                    welcomeMessages, 
+                    Min(
+                        RoundDown(NavigateTimer.Value / Max(messageViewTime, 1), 0) + 1,
+                        CountRows(welcomeMessages)
+                    )
+                ).Message.Font,
+                Font.'Open Sans'
+            )
+        Height: =Parent.Height
+        Size: |-
+            =// welcomeMessages読み込み前に参照されるとエラーとなる
+            IfError(
+                // Index関数がwelcomeMessagesの範囲を超えないように制御
+                Index(
+                    welcomeMessages, 
+                    Min(
+                        RoundDown(NavigateTimer.Value / Max(messageViewTime, 1), 0) + 1,
+                        CountRows(welcomeMessages)
+                    )
+                ).Message.Size,
+                0
+            )
+        Text: |-
+            =// welcomeMessages読み込み前に参照されるとエラーとなる
+            IfError(
+                // Index関数がwelcomeMessagesの範囲を超えないように制御
+                Index(
+                    welcomeMessages, 
+                    Min(
+                        RoundDown(NavigateTimer.Value / Max(messageViewTime, 1), 0) + 1, 
+                        CountRows(welcomeMessages)
+                    )
+                ).Message.Text,
+                Blank()
+            )
+        Width: =Parent.Width
+        ZIndex: =2
+
+    MyImg As image:
+        Height: =Self.Width
+        Image: =コルネ
+        Visible: =NavigateTimer.Value >= 6000
+        Width: =450
+        X: =Parent.Width - Self.Width + 70
+        Y: |-
+            =/* 
+                初回読み込み時に変数設定前に計算が行われる場合があり、0除算エラーが発生する。
+                これを回避するためにIfErrorを追加
+            */
+            Parent.Height - 
+                IfError(
+                    Abs(Sin(Radians(NavigateTimer.Value / messageViewTime * 180))),
+                    0
+                ) 
+            * (Self.Height - 50)
+        ZIndex: =3
+

@@ -1,0 +1,434 @@
+PlayScreen As screen:
+    Fill: |-
+        =If(
+            !miss.flg,
+            Switch(
+                DesignTheme,
+                THEME.Light, RGBA(255, 255, 255, 1),
+                THEME.Dark, RGBA(15, 15, 15, 1)
+            ),
+            RGBA(220, 20, 60, 1)
+        )
+    OnVisible: =Select(IniBtn)
+
+    IniBtn As button:
+        OnSelect: |-
+            =Clear(gameBoard);
+            UpdateContext({timerStart: false});
+            Reset(Timer);
+            Clear(playerSelect);
+            // ミスしたときに視覚的にわかりやすくするために利用
+            UpdateContext(
+                {
+                    miss: 
+                        {
+                            flg: false,
+                            time: 0
+                        }
+                }
+            )
+        Text: ="ini"
+        Visible: =false
+        Y: =82
+        ZIndex: =1
+
+    Timer As timer:
+        Duration: =24 * 60 * 60 * 1000
+        OnTimerEnd: =
+        Repeat: =true
+        Start: =timerStart
+        Visible: =false
+        Y: =728
+        ZIndex: =2
+
+    LevelLbl As label:
+        Align: =Align.Center
+        Color: |-
+            =Switch(
+                DesignTheme,
+                THEME.Light, RGBA(0, 0, 0, 1),
+                THEME.Dark, RGBA(255, 255, 255, 1)
+            )
+        Font: ="Jokerman"
+        Height: =50
+        Size: =20
+        Text: |-
+            =Switch(
+                level,
+                LEVEL.Beginner, "Beginner",
+                LEVEL.Normal, "Normal",
+                LEVEL.Advanced, "Advanced",
+                LEVEL.Extreme, "Extreme"
+            )
+        X: =Parent.Width - Self.Width
+        ZIndex: =3
+
+    BackLineImg As image:
+        Height: =PlayGallery.Height
+        Image: |-
+            ="data:image/svg+xml,"& 
+            EncodeUrl(
+                "<svg viewBox='0 0 "& Self.Width & " " & Self.Height & "' xmlns='http://www.w3.org/2000/svg'>" &
+                    // 縦線
+                    Concat(
+                        ForAll(
+                            Sequence(cell.x - 1),
+                            "<line
+                                x1='" & ThisRecord.Value * cell.size & "' 
+                                y1='0' 
+                                x2='" & ThisRecord.Value * cell.size & "' 
+                                y2='" & Self.Height &"' 
+                                stroke='" &
+                                    Switch(
+                                        DesignTheme,
+                                        THEME.Light, "#0f0f0f",
+                                        THEME.Dark, "#fafafa"
+                                    )
+                                 & "' 
+                                stroke-width='2'
+                            />"
+                        ),
+                        ThisRecord.Value
+                    ) &
+                    // 横線
+                    Concat(
+                        ForAll(
+                            Sequence(cell.y - 1),
+                            "<line
+                                x1='0' 
+                                y1='" & ThisRecord.Value * cell.size & "' 
+                                x2='" & Self.Width & "' 
+                                y2='" & ThisRecord.Value * cell.size & "' 
+                                stroke='" &
+                                    Switch(
+                                        DesignTheme,
+                                        THEME.Light, "#0f0f0f",
+                                        THEME.Dark, "#fafafa"
+                                    )
+                                 & "'  
+                                stroke-width='2'
+                            />"
+                        ),
+                        ThisRecord.Value
+                    )
+                & "</svg>"
+            )
+        Width: =PlayGallery.Width
+        X: =PlayGallery.X
+        Y: =PlayGallery.Y
+        ZIndex: =4
+
+    PlayGallery As gallery.galleryVertical:
+        BorderColor: |-
+            =Switch(
+                DesignTheme,
+                THEME.Light, RGBA(63, 63, 63, 1),
+                THEME.Dark, RGBA(203, 203, 203, 1)
+            )
+        BorderThickness: =2
+        Height: =cell.size * cell.y
+        Items: =gameBoard
+        Layout: =Layout.Vertical
+        OnSelect: =
+        TemplatePadding: =0
+        TemplateSize: =0
+        Width: =cell.size * cell.x
+        X: =(Parent.Width - Self.Width) / 2
+        Y: =(Parent.Height - Self.Height) / 2
+        ZIndex: =5
+
+        NumberBtn As button:
+            Color: |-
+                =If(
+                    // バック用アイテム(Dummy)は常に透明
+                    ThisItem._ID <> -1 &&
+                    // 各レベルごとの表示期間 or Playerに選択されたアイテムのみ表示
+                    (
+                        Switch(
+                            level,
+                            // Beginnerは表示期間中であれば表示
+                            LEVEL.Beginner, 
+                                Timer.Value <= visibleTime,
+                            // Normalは表示期間中であれば表示
+                            LEVEL.Normal, 
+                                Timer.Value <= visibleTime,
+                            // Advancedは表示期間中であれば数字の順番に1つずつ表示
+                            LEVEL.Advanced, 
+                                Timer.Value <= visibleTime && RoundDown(Timer.Value / (visibleTime / 9), 0) + 1 = ThisItem.Number,
+                            // Beginnerは表示期間中であればランダムに1つづつ表示
+                            LEVEL.Extreme, 
+                                Timer.Value <= visibleTime && RoundDown(Timer.Value / (visibleTime / 9), 0) + 1 = ThisItem._ID
+                         ) ||
+                            !IsBlank(LookUp(Filter(playerSelect, isCorrect), Value = ThisItem.Number))
+                    ),
+                    Switch(
+                        DesignTheme,
+                        THEME.Light, RGBA(255, 255, 255, 1),
+                        THEME.Dark, RGBA(0, 0, 0, 1)
+                    ),
+                    RGBA(0, 0, 0, 0)
+                )
+            DisplayMode: |-
+                =If(
+                    Timer.Value > visibleTime && timerStart,
+                    DisplayMode.Edit,
+                    DisplayMode.View
+                )
+            Fill: |-
+                =If(
+                    // バック用アイテム(Dummy)
+                    ThisItem._ID <> -1 &&
+                // 各レベルごとの表示期間 or Playerに選択されたアイテムのみ表示
+                    (
+                        Switch(
+                            level,
+                            // Beginnerは表示期間中であれば表示
+                            LEVEL.Beginner, 
+                                Timer.Value <= visibleTime,
+                            // Normalは表示期間中であれば表示
+                            LEVEL.Normal, 
+                                Timer.Value <= visibleTime,
+                            // Advancedは表示期間中であれば数字の順番に1つずつ表示
+                            LEVEL.Advanced, 
+                                Timer.Value <= visibleTime && RoundDown(Timer.Value / (visibleTime / 9), 0) + 1 = ThisItem.Number,
+                            // Extremeは表示期間中であればランダムに1つづつ表示
+                            LEVEL.Extreme, 
+                                Timer.Value <= visibleTime && RoundDown(Timer.Value / (visibleTime / 9), 0) + 1 = ThisItem._ID
+                         ) ||
+                            !IsBlank(LookUp(Filter(playerSelect, isCorrect), Value = ThisItem.Number))
+                    ),
+                    Switch(
+                    DesignTheme,
+                        THEME.Light, RGBA(63, 63, 63, 1),
+                        THEME.Dark, RGBA(217, 217, 217, 1)
+                    ),
+                    RGBA(0, 0, 0, 0)
+                )
+            Height: =ThisItem.Height
+            HoverColor: =Self.Color
+            HoverFill: =ColorFade(Self.Fill, -20%)
+            OnSelect: |-
+                =If(
+                    Last(Filter(playerSelect, isCorrect)).Value + 1 <> ThisItem.Number,
+                    UpdateContext(
+                        {
+                            miss:
+                            {
+                                flg: true,
+                                time: Timer.Value
+                            }
+                        }
+                    );
+                );
+                Collect(
+                    playerSelect,
+                    {
+                        isCorrect: Last(Filter(playerSelect, isCorrect)).Value + 1 = ThisItem.Number,
+                        Value: ThisItem.Number
+                    }
+                )
+            Size: =30
+            Text: =ThisItem.Number
+            Width: =ThisItem.Width
+            X: =ThisItem.X * Self.Width
+            Y: =ThisItem.Y * Self.Height - Max(ThisItem._ID, 0)
+            ZIndex: =1
+
+    StartBtn As button:
+        Color: |-
+            =Switch(
+                DesignTheme,
+                THEME.Light, RGBA(255, 255, 255, Cos(Radians(Min(Timer.Value / 1500 * 90, 90)))),
+                THEME.Dark, RGBA(0, 0, 0, Cos(Radians(Min(Timer.Value / 1500 * 90, 90))))
+            )
+        DisplayMode: |-
+            =If(
+                !timerStart,
+                DisplayMode.Edit,
+                DisplayMode.View
+            )
+        Fill: |-
+            =Switch(
+                DesignTheme,
+                THEME.Light, RGBA(63, 63, 63, Cos(Radians(Min(Timer.Value / 1500 * 90, 90)))),
+                THEME.Dark, RGBA(217, 217, 217, Cos(Radians(Min(Timer.Value / 1500 * 90, 90))))
+            )
+        Height: =60
+        HoverColor: =ColorFade(Self.Color, -20%)
+        HoverFill: =ColorFade(Self.Fill, -20%)
+        OnSelect: |-
+            =ClearCollect(
+                gameBoard,
+                With(
+                    {
+                        pos: 
+                            Shuffle(
+                                Sequence(
+                                    cell.x * cell.y, 
+                                    0
+                                )
+                            ),
+                        num: Shuffle(Sequence(9))
+                    },
+                    Ungroup(
+                        [
+                            // バック用アイテム(Dummy)
+                            Table(
+                                {
+                                    _ID: -1,
+                                    Number: -1,
+                                    X: 0,
+                                    Y: 0,
+                                    Width: cell.size * cell.x,
+                                    Height: cell.size * cell.y
+                                }
+                            ),
+                            // Player選択マス
+                            ForAll(
+                                Sequence(9),
+                                {
+                                    _ID: ThisRecord.Value,
+                                    Number: Index(num, ThisRecord.Value).Value,
+                                    X: Mod(Index(pos, ThisRecord.Value).Value, cell.x),
+                                    Y: RoundDown(Index(pos, ThisRecord.Value).Value / cell.x, 0),
+                                    Width: cell.size,
+                                    Height: cell.size
+                                }
+                            )
+                        ],
+                        "Value"
+                    )
+                )
+            );
+            UpdateContext({timerStart: true})
+        Size: =30
+        Text: ="Start"
+        Width: =PlayGallery.Width / 2
+        X: =PlayGallery.X + (PlayGallery.Width - Self.Width) / 2
+        Y: =Parent.Height - Self.Height - (Parent.Height - (PlayGallery.Y + PlayGallery.Height) - Self.Height) / 2
+        ZIndex: =6
+
+    TimerImg As image:
+        Image: |-
+            ="data:image/svg+xml,"& 
+            EncodeUrl(
+                "<svg viewBox='0 0 "& Self.Width & " " & Self.Height & "' xmlns='http://www.w3.org/2000/svg'>
+                    <circle 
+                        cx='" & Self.Width / 2 & "' 
+                        cy='" & Self.Height / 2 & "' 
+                        r='" & Self.Width / 2 & "' 
+                        fill='" &
+                            Switch(
+                                DesignTheme,
+                                THEME.Light, "#e5e5e5",
+                                THEME.Dark, "#3f3f3f"
+                            )
+                        & "' 
+                    />
+                    <path 
+                        d='M" & Self.Width / 2 & "," & Self.Height / 2 & " 
+                        L" & Self.Width / 2 & ",0 
+                        A" & Self.Width / 2 & "," & Self.Height / 2 & " 
+                            0 " &
+                            If(
+                                Timer.Value < visibleTime / 2,
+                                "0,1",
+                                "1,1"
+                            ) 
+                            & "
+                            " & Self.Width / 2 + Self.Width / 2 * Sin(Radians(Min((Timer.Value / visibleTime), 0.999) * 360)) & "," & 
+                                Self.Height / 2 - Self.Height / 2 * Cos(Radians(Min((Timer.Value / visibleTime), 0.999) * 360)) & "z' 
+                        fill='" &
+                            Switch(
+                                DesignTheme,
+                                THEME.Light, "#030303",
+                                THEME.Dark, "#f1f1f1"
+                            )
+                        & "' 
+                    />
+                </svg>"
+            )
+        Visible: |-
+            =// 少し消えるのに余裕を持たせる
+            Timer.Value <= visibleTime + 50 && timerStart
+        Width: =Self.Height
+        X: =(Parent.Width - Self.Width) / 2
+        Y: =(PlayGallery.Y - Self.Height) / 2
+        ZIndex: =7
+
+    ClearJudge As toggleSwitch:
+        Default: =CountRows(Filter(playerSelect, isCorrect)) = 9
+        OnCheck: |-
+            =UpdateContext({timerStart: false})
+        Visible: =false
+        X: =1274
+        Y: =740
+        ZIndex: =8
+
+    BackArrow As arrow.backArrow:
+        Fill: |-
+            =Switch(
+                DesignTheme,
+                THEME.Light, RGBA(63, 63, 63, 1),
+                THEME.Dark, RGBA(217, 217, 217, 1)
+            )
+        OnSelect: |-
+            =Back();
+            Clear(gameBoard)
+        X: =5
+        Y: =5
+        ZIndex: =9
+
+    ResultLbl As label:
+        Align: =Align.Center
+        Color: |-
+            =Switch(
+                DesignTheme,
+                THEME.Light, RGBA(0, 0, 0, 1),
+                THEME.Dark, RGBA(255, 255, 255, 1)
+            )
+        Height: =100
+        Size: =25
+        Text: |-
+            =// 0除算回避でMax( , 1)
+            $"Time: {Text(Timer.Value - 5000, "s.ff秒")}
+            正答率: {RoundDown(CountIf(playerSelect, isCorrect) / Max(CountRows(playerSelect), 1) * 100, 1)}%"
+        Visible: =ClearJudge.Value
+        Width: =450
+        X: =(Parent.Width - Self.Width) / 2
+        Y: =(PlayGallery.Y - Self.Height) / 2
+        ZIndex: =10
+
+    RetryBtn As button:
+        Color: |-
+            =Switch(
+                DesignTheme,
+                THEME.Light, RGBA(255, 255, 255, 1),
+                THEME.Dark, RGBA(0, 0, 0, 1)
+            )
+        Fill: |-
+            =Switch(
+                DesignTheme,
+                THEME.Light, RGBA(63, 63, 63, 1),
+                THEME.Dark, RGBA(217, 217, 217, 1)
+            )
+        Height: =StartBtn.Height
+        HoverColor: =ColorFade(Self.Color, -20%)
+        HoverFill: =ColorFade(Self.Fill, -20%)
+        OnSelect: =Select(IniBtn)
+        Size: =StartBtn.Size
+        Text: ="Retry"
+        Visible: =ClearJudge.Value
+        Width: =StartBtn.Width
+        X: =StartBtn.X
+        Y: =StartBtn.Y
+        ZIndex: =11
+
+    MissViewJudge As toggleSwitch:
+        Default: =miss.time + 200 < Timer.Value
+        OnCheck: |-
+            =UpdateContext({miss: {flg: false}})
+        Visible: =false
+        X: =1274
+        ZIndex: =12
+

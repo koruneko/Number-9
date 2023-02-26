@@ -1,0 +1,219 @@
+HomeScreen As screen:
+    Fill: |-
+        =Switch(
+            DesignTheme,
+            THEME.Light, RGBA(255, 255, 255, 1),
+            THEME.Dark, RGBA(15, 15, 15, 1)
+        )
+    OnVisible: =
+
+    TitleLbl As label:
+        Align: =Align.Center
+        Color: |-
+            =Switch(
+                DesignTheme,
+                THEME.Light, RGBA(0, 0, 0, 1),
+                THEME.Dark, RGBA(255, 255, 255, 1)
+            )
+        Font: ="Chiller"
+        Height: =120
+        PaddingTop: =30
+        Size: =100
+        Text: ="Number 9"
+        Width: =Parent.Width / 2
+        X: =(Parent.Width - Self.Width) / 2
+        ZIndex: =1
+
+    DesignThemeImg As image:
+        Height: =80
+        Image: |-
+            ="data:image/svg+xml,"& 
+            Switch(
+                DesignTheme,
+                THEME.Light,
+                    EncodeUrl(
+                        "<svg xmlns='http://www.w3.org/2000/svg' class='icon icon-tabler icon-tabler-sun-filled' width='24' height='24' viewBox='0 0 24 24' stroke-width='2' stroke='currentColor' fill='none' stroke-linecap='round' stroke-linejoin='round'>
+                            <path stroke='none' d='M0 0h24v24H0z' fill='none'></path>
+                            <path d='M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7'></path>
+                            <path d='M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0' fill='#0f0f0f'></path>
+                        </svg>"
+                    ),
+                THEME.Dark,
+                    EncodeUrl(
+                            "<svg xmlns='http://www.w3.org/2000/svg' class='icon icon-tabler icon-tabler-moon-filled' width='24' height='24' viewBox='0 0 24 24' stroke-width='2' stroke='currentColor' fill='none' stroke-linecap='round' stroke-linejoin='round'>
+                            <path stroke='none' d='M0 0h24v24H0z' fill='none'></path>
+                            <path d='M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z' fill='#fafafa' stroke='none'></path>
+                        </svg>"
+                    )
+            )
+        OnSelect: =Set(DesignTheme, Mod(DesignTheme + 1, themeCnt))
+        Width: =Self.Height
+        X: =Parent.Width - Self.Width
+        ZIndex: =2
+
+    SelectLevelCnt As groupContainer.verticalAutoLayoutContainer:
+        Height: =400
+        LayoutAlignItems: =LayoutAlignItems.Center
+        LayoutDirection: =LayoutDirection.Vertical
+        LayoutJustifyContent: =LayoutJustifyContent.SpaceBetween
+        LayoutMode: =LayoutMode.Auto
+        X: =(Parent.Width - Self.Width) / 2
+        Y: =(Parent.Height - Self.Height) / 2 + 50
+        ZIndex: =3
+
+        BeginnerBtn As button:
+            Color: |-
+                =Switch(
+                    DesignTheme,
+                    THEME.Light, RGBA(255, 255, 255, 1),
+                    THEME.Dark, RGBA(0, 0, 0, 1)
+                )
+            Fill: |-
+                =Switch(
+                    DesignTheme,
+                    THEME.Light, RGBA(63, 63, 63, 1),
+                    THEME.Dark, RGBA(217, 217, 217, 1)
+                )
+            Height: =StartBtn.Height
+            HoverColor: =ColorFade(Self.Color, -20%)
+            HoverFill: =ColorFade(Self.Fill, -20%)
+            OnSelect: |-
+                =Navigate(
+                    PlayScreen, 
+                    ScreenTransition.None, 
+                    {
+                        level: LEVEL.Beginner,
+                        cell:
+                            {
+                                x: 3,
+                                y: 3,
+                                size: 150
+                            },
+                        // [ms]
+                        visibleTime: 5000
+                    }
+                )
+            Size: =StartBtn.Size
+            Text: ="Beginner"
+            Width: =250
+            X: =StartBtn.X
+            Y: =StartBtn.Y
+            ZIndex: =1
+
+        NormalBtn As button:
+            Color: |-
+                =Switch(
+                    DesignTheme,
+                    THEME.Light, RGBA(255, 255, 255, 1),
+                    THEME.Dark, RGBA(0, 0, 0, 1)
+                )
+            Fill: |-
+                =Switch(
+                    DesignTheme,
+                    THEME.Light, RGBA(63, 63, 63, 1),
+                    THEME.Dark, RGBA(217, 217, 217, 1)
+                )
+            Height: =StartBtn.Height
+            HoverColor: =ColorFade(Self.Color, -20%)
+            HoverFill: =ColorFade(Self.Fill, -20%)
+            OnSelect: |-
+                =Navigate(
+                    PlayScreen, 
+                    ScreenTransition.None, 
+                    {
+                        level: LEVEL.Normal,
+                        cell:
+                            {
+                                x: 10,
+                                y: 6,
+                                size: 80
+                            },
+                        // [ms]
+                        visibleTime: 5000
+                    }
+                )
+            Size: =StartBtn.Size
+            Text: ="Normal"
+            Width: =250
+            X: =StartBtn.X
+            Y: =StartBtn.Y
+            ZIndex: =2
+
+        AdvancedBtn As button:
+            Color: |-
+                =Switch(
+                    DesignTheme,
+                    THEME.Light, RGBA(255, 255, 255, 1),
+                    THEME.Dark, RGBA(0, 0, 0, 1)
+                )
+            Fill: |-
+                =Switch(
+                    DesignTheme,
+                    THEME.Light, RGBA(63, 63, 63, 1),
+                    THEME.Dark, RGBA(217, 217, 217, 1)
+                )
+            Height: =StartBtn.Height
+            HoverColor: =ColorFade(Self.Color, -20%)
+            HoverFill: =ColorFade(Self.Fill, -20%)
+            OnSelect: |-
+                =Navigate(
+                    PlayScreen, 
+                    ScreenTransition.None, 
+                    {
+                        level: LEVEL.Advanced,
+                        cell:
+                            {
+                                x: 10,
+                                y: 6,
+                                size: 80
+                            },
+                        // [ms]
+                        visibleTime: 7500
+                    }
+                )
+            Size: =StartBtn.Size
+            Text: ="Advanced"
+            Width: =250
+            X: =StartBtn.X
+            Y: =StartBtn.Y
+            ZIndex: =3
+
+        ExtremeBtn As button:
+            Color: |-
+                =Switch(
+                    DesignTheme,
+                    THEME.Light, RGBA(255, 255, 255, 1),
+                    THEME.Dark, RGBA(0, 0, 0, 1)
+                )
+            Fill: |-
+                =Switch(
+                    DesignTheme,
+                    THEME.Light, RGBA(63, 63, 63, 1),
+                    THEME.Dark, RGBA(217, 217, 217, 1)
+                )
+            Height: =StartBtn.Height
+            HoverColor: =ColorFade(Self.Color, -20%)
+            HoverFill: =ColorFade(Self.Fill, -20%)
+            OnSelect: |-
+                =Navigate(
+                    PlayScreen, 
+                    ScreenTransition.None, 
+                    {
+                        level: LEVEL.Extreme,
+                        cell:
+                            {
+                                x: 10,
+                                y: 6,
+                                size: 80
+                            },
+                        // [ms]
+                        visibleTime: 7500
+                    }
+                )
+            Size: =StartBtn.Size
+            Text: ="Extreme"
+            Width: =250
+            X: =StartBtn.X
+            Y: =StartBtn.Y
+            ZIndex: =4
+
